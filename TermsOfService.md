@@ -21,4 +21,4 @@ Welcome to the Finals Roulette Bot (“the Bot”). By using this Bot, you agree
    - The developer assumes no responsibility for data loss, downtime, or misuse.
 
 5. **Contact**
-   - For questions or issues, contact [your GitHub username or email].
+   - For questions or issues, contact deraingo3@gmail.com.

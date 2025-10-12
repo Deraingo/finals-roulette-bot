@@ -19,4 +19,4 @@ The Finals Roulette Bot (“the Bot”) values your privacy. This policy explain
 - The Bot token and credentials are stored securely using environment variables.
 
 ## Contact
-If you have privacy-related concerns, please contact [your GitHub username or email].
+If you have privacy-related concerns, please contact deraingo3@gmail.com.
