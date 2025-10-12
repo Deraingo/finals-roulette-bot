@@ -1,7 +1,7 @@
 import { Client, GatewayIntentBits } from "discord.js";
 import dotenv from "dotenv";
 import { sendLoadout } from "./src/commands/roulette.js";
-import { sendHelp } from "./src/commands/help";
+import { sendHelp } from "./src/commands/help.js";
 
 dotenv.config();
 console.log("\n\n\nLoaded token:", process.env.DISCORD_TOKEN ? "YES\n\n\n" : "NO\n\n\n");
