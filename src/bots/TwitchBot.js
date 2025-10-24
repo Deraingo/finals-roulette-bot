@@ -38,6 +38,11 @@ export async function initTwitchBot(config) {
   // Get the hostname for EventSub webhooks (without http://)
   const hostName = process.env.RENDER_EXTERNAL_URL?.replace(/^https?:\/\//, '') || 'localhost:3000';
 
+  console.log(`🔍 EventSub Config:`);
+  console.log(`   Hostname: ${hostName}`);
+  console.log(`   Webhook URL: https://${hostName}/eventsub`);
+  console.log(`   Secret configured: ${webhookSecret ? 'Yes' : 'No'}`);
+
   // Create EventSub middleware for Express
   const eventSub = new EventSubMiddleware({
     apiClient,
