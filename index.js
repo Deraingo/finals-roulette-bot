@@ -9,6 +9,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`📨 ${req.method} ${req.path} from ${req.ip}`);
+  next();
+});
+
 // Health check endpoint (for Render)
 app.get("/", (req, res) => {
   res.send("Finals Roulette Bot is running! 🎲");
