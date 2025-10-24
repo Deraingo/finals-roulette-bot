@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: finals-roulette-bot
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: TWITCH_BOT_USERNAME
+        sync: false
+      - key: TWITCH_BOT_USER_ID
+        sync: false
+      - key: TWITCH_OAUTH_TOKEN
+        sync: false
+      - key: TWITCH_CLIENT_ID
+        sync: false
+      - key: TWITCH_CLIENT_SECRET
+        sync: false
+      - key: TWITCH_CHANNELS
+        sync: false
+      - key: TWITCH_CHANNEL_IDS
+        sync: false
+      - key: TWITCH_REDEMPTION_TITLE
+        sync: false
+      - key: TWITCH_WEBHOOK_SECRET
+        sync: false
