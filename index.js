@@ -2,8 +2,8 @@ import { StaticAuthProvider } from "@twurple/auth";
 import { ApiClient } from "@twurple/api";
 import { EventSubMiddleware } from "@twurple/eventsub-http";
 import { ChatClient } from "@twurple/chat";
-import { generateRandomLoadout } from "./src/data/loadoutGenerator.js";
-import { formatForTwitch } from "./src/utils/formatters.js";
+import { generateRandomLoadout } from "../data/loadoutGenerator.js";
+import { formatForTwitch } from "../utils/formatters.js";
 
 export async function initTwitchBot(config) {
   const {

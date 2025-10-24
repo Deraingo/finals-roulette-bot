@@ -1,4 +1,4 @@
-import { classes } from "../data/classes.js";
+import { classes } from "./classes.js";
 
 
 export const generateRandomLoadout = () => {
