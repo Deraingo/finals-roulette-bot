@@ -1,43 +1,104 @@
-import dotenv from "dotenv";
-import express from "express";
-import { initDiscordBot } from "./src/bots/DiscordBot.js";
-import { initTwitchBot } from "./src/bots/TwitchBot.js";
+import { StaticAuthProvider } from "@twurple/auth";
+import { ApiClient } from "@twurple/api";
+import { EventSubMiddleware } from "@twurple/eventsub-http";
+import { ChatClient } from "@twurple/chat";
+import { generateRandomLoadout } from "../data/loadoutGenerator.js";
+import { formatForTwitch } from "../utils/formatters.js";
 
-dotenv.config();
+export async function initTwitchBot(config) {
+  const {
+    clientId,
+    clientSecret,
+    oauthToken,
+    botUsername,
+    channels,
+    channelIds,
+    redemptionTitle,
+    expressApp,
+    webhookSecret,
+  } = config;
 
-// Create Express server for EventSub webhooks
-const app = express();
-const PORT = process.env.PORT || 3000;
+  // Remove 'oauth:' prefix if present
+  const token = oauthToken.replace("oauth:", "");
 
-// Request logging middleware
-app.use((req, res, next) => {
-  console.log(`📨 ${req.method} ${req.path} from ${req.ip}`);
-  next();
-});
+  // Use StaticAuthProvider (doesn't require refresh token)
+  const authProvider = new StaticAuthProvider(clientId, token, [
+    "chat:read",
+    "chat:edit",
+    "channel:read:redemptions",
+  ]);
+  const apiClient = new ApiClient({ authProvider });
 
-// Health check endpoint (for Render)
-app.get("/", (req, res) => {
-  res.send("Finals Roulette Bot is running! 🎲");
-});
+  // Create ChatClient for sending messages
+  const chatClient = new ChatClient({
+    authProvider,
+    channels,
+  });
 
-// Start Discord bot
-initDiscordBot(process.env.DISCORD_TOKEN);
+  // Get the hostname for EventSub webhooks
+  // Render automatically provides RENDER_EXTERNAL_HOSTNAME
+  const hostName = process.env.RENDER_EXTERNAL_HOSTNAME || 
+                   process.env.RENDER_EXTERNAL_URL?.replace(/^https?:\/\//, '') || 
+                   'localhost';
 
-// Start Twitch bot and pass the Express app for EventSub webhooks
-const twitchBot = await initTwitchBot({
-  clientId: process.env.TWITCH_CLIENT_ID,
-  clientSecret: process.env.TWITCH_CLIENT_SECRET,
-  oauthToken: process.env.TWITCH_OAUTH_TOKEN,
-  botUsername: process.env.TWITCH_BOT_USERNAME,
-  botUserId: process.env.TWITCH_BOT_USER_ID,
-  channels: process.env.TWITCH_CHANNELS.split(","),
-  channelIds: process.env.TWITCH_CHANNEL_IDS.split(","),
-  redemptionTitle: process.env.TWITCH_REDEMPTION_TITLE,
-  expressApp: app, // Pass the Express app to TwitchBot
-  webhookSecret: process.env.TWITCH_WEBHOOK_SECRET, // For EventSub verification
-});
+  console.log(`🔍 EventSub Config:`);
+  console.log(`   Hostname: ${hostName}`);
+  console.log(`   Webhook URL: https://${hostName}/eventsub`);
+  console.log(`   Secret configured: ${webhookSecret ? 'Yes' : 'No'}`);
 
-// Start the web server
-app.listen(PORT, () => {
-  console.log(`🌐 Web server listening on port ${PORT}`);
-});
+  // Create EventSub middleware for Express
+  const eventSub = new EventSubMiddleware({
+    apiClient,
+    hostName,
+    pathPrefix: "/eventsub",
+    secret: webhookSecret,
+    strictHostCheck: false, // Important for Render's reverse proxy
+  });
+
+  // Apply EventSub middleware to Express app
+  console.log(`🔗 Applying EventSub middleware...`);
+  await eventSub.apply(expressApp);
+  console.log(`✅ EventSub middleware applied`);
+
+  // Subscribe to channel point redemptions for each channel
+  console.log(`📝 Creating EventSub subscriptions for ${channelIds.length} channels...`);
+
+  for (const [index, channelId] of channelIds.entries()) {
+    try {
+      console.log(`   Subscribing to channel ID: ${channelId} (${channels[index]})`);
+      
+      const listener = await eventSub.onChannelRedemptionAdd(channelId, (event) => {
+        console.log(`🎯 Redemption received: "${event.rewardTitle}" by ${event.userName} in ${channels[index]}`);
+        
+        if (event.rewardTitle === redemptionTitle) {
+          try {
+            const loadout = generateRandomLoadout();
+            const loadoutString = formatForTwitch(loadout);
+            const channelName = channels[index];
+            chatClient.say(channelName, loadoutString);
+            console.log(`✅ Sent loadout to ${channelName}`);
+          } catch (error) {
+            console.error(`❌ Error generating/sending loadout:`, error);
+          }
+        }
+      });
+      
+      console.log(`   ✅ Subscription created for ${channels[index]}`);
+    } catch (error) {
+      console.error(`   ❌ Failed to subscribe to ${channels[index]}:`, error.message);
+      // Continue with other channels even if one fails
+    }
+  }
+
+  console.log(`✅ All EventSub subscriptions created!`);
+
+  // Connect chat client
+  console.log(`💬 Connecting to Twitch chat...`);
+  await chatClient.connect();
+  console.log(`✅ Twitch bot connected as ${botUsername}`);
+  console.log(`📺 Listening to channels: ${channels.join(", ")}`);
+  console.log(`🎯 Redemption trigger: "${redemptionTitle}"`);
+  console.log(`🔗 EventSub webhooks ready at /eventsub`);
+
+  return { chatClient, eventSub, apiClient };
+}
