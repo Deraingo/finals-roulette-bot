@@ -9,10 +9,18 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Health check render endpoint
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`📨 ${req.method} ${req.path} from ${req.ip}`);
+  next();
+});
+
+// Health check endpoint (for Render)
 app.get("/", (req, res) => {
   res.send("Finals Roulette Bot is running! 🎲");
 });
+
+// Start Discord bot
 initDiscordBot(process.env.DISCORD_TOKEN);
 
 // Start Twitch bot and pass the Express app for EventSub webhooks
@@ -28,6 +36,8 @@ const twitchBot = await initTwitchBot({
   expressApp: app, // Pass the Express app to TwitchBot
   webhookSecret: process.env.TWITCH_WEBHOOK_SECRET, // For EventSub verification
 });
+
+// Start the web server
 app.listen(PORT, () => {
   console.log(`🌐 Web server listening on port ${PORT}`);
 });
