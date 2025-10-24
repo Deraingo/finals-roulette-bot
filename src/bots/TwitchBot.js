@@ -36,7 +36,10 @@ export async function initTwitchBot(config) {
   });
 
   // Get the hostname for EventSub webhooks (without http://)
-  const hostName = process.env.RENDER_EXTERNAL_URL?.replace(/^https?:\/\//, '') || 'localhost:3000';
+  // Render provides RENDER_EXTERNAL_HOSTNAME automatically
+  const hostName = process.env.RENDER_EXTERNAL_HOSTNAME ||
+                   process.env.RENDER_EXTERNAL_URL?.replace(/^https?:\/\//, '') ||
+                   'localhost:3000';
 
   console.log(`🔍 EventSub Config:`);
   console.log(`   Hostname: ${hostName}`);
