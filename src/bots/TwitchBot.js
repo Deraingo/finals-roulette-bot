@@ -50,16 +50,28 @@ export async function initTwitchBot(config) {
   await eventSub.apply(expressApp);
 
   // Subscribe to channel point redemptions for each channel
+  console.log(`📝 Creating EventSub subscriptions for ${channelIds.length} channels...`);
+
   for (const [index, channelId] of channelIds.entries()) {
-    await eventSub.onChannelRedemptionAdd(channelId, (event) => {
-      if (event.rewardTitle === redemptionTitle) {
-        const loadout = generateRandomLoadout();
-        const loadoutString = formatForTwitch(loadout);
-        const channelName = channels[index];
-        chatClient.say(channelName, loadoutString);
-      }
-    });
+    try {
+      console.log(`   Subscribing to channel ID: ${channelId} (${channels[index]})`);
+      await eventSub.onChannelRedemptionAdd(channelId, (event) => {
+        console.log(`🎯 Redemption received: "${event.rewardTitle}" by ${event.userName} in ${channels[index]}`);
+        if (event.rewardTitle === redemptionTitle) {
+          const loadout = generateRandomLoadout();
+          const loadoutString = formatForTwitch(loadout);
+          const channelName = channels[index];
+          chatClient.say(channelName, loadoutString);
+          console.log(`✅ Sent loadout to ${channelName}`);
+        }
+      });
+      console.log(`   ✅ Subscription created for ${channels[index]}`);
+    } catch (error) {
+      console.error(`   ❌ Failed to subscribe to ${channels[index]}:`, error.message);
+    }
   }
+
+  console.log(`✅ All EventSub subscriptions created!`);
 
   await chatClient.connect();
 
