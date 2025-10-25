@@ -63,7 +63,7 @@ export async function initTwitchBot(config) {
   for (const [index, channelId] of channelIds.entries()) {
     try {
       console.log(`   Subscribing to channel ID: ${channelId} (${channels[index]})`);
-      await eventSub.onChannelRedemptionAdd(channelId, (event) => {
+      const subscription = await eventSub.onChannelRedemptionAdd(channelId, (event) => {
         console.log(`🎯 Redemption received: "${event.rewardTitle}" by ${event.userName} in ${channels[index]}`);
         if (event.rewardTitle === redemptionTitle) {
           const loadout = generateRandomLoadout();
@@ -74,8 +74,11 @@ export async function initTwitchBot(config) {
         }
       });
       console.log(`   ✅ Subscription created for ${channels[index]}`);
+      console.log(`   📋 Subscription ID: ${subscription.id}`);
+      console.log(`   📊 Subscription status: ${subscription.status}`);
     } catch (error) {
-      console.error(`   ❌ Failed to subscribe to ${channels[index]}:`, error.message);
+      console.error(`   ❌ Failed to subscribe to ${channels[index]}:`, error);
+      console.error(`   Error details:`, error.stack);
     }
   }
 
