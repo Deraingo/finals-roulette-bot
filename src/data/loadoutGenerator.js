@@ -9,7 +9,7 @@ export const generateRandomLoadout = () => {
     const randomWeapon = playerClass.weapons[Math.floor(Math.random() * playerClass.weapons.length)];
     const shuffledEquipment = [...playerClass.equipment].sort(() => Math.random() - 0.5);
     const shuffledAbilities = [...playerClass.abilities].sort(() => Math.random() - 0.5);
-    const randomEquipment = shuffledEquipment.slice(0, 4);
+    const randomEquipment = shuffledEquipment.slice(0, 3);
     const randomAbility = shuffledAbilities[Math.floor(Math.random() * shuffledAbilities.length)];
     return {
         className : randomClassName,
