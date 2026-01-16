@@ -20,7 +20,6 @@ app.get("/", (req, res) => {
   res.send("Finals Roulette Bot is running! 🎲");
 });
 
-// Start Discord bot
 initDiscordBot(process.env.DISCORD_TOKEN);
 
 // Start Twitch bot and pass the Express app for EventSub webhooks
@@ -33,11 +32,10 @@ const twitchBot = await initTwitchBot({
   channels: process.env.TWITCH_CHANNELS.split(","),
   channelIds: process.env.TWITCH_CHANNEL_IDS.split(","),
   redemptionTitle: process.env.TWITCH_REDEMPTION_TITLE,
-  expressApp: app, // Pass the Express app to TwitchBot
-  webhookSecret: process.env.TWITCH_WEBHOOK_SECRET, // For EventSub verification
+  expressApp: app,
+  webhookSecret: process.env.TWITCH_WEBHOOK_SECRET,
 });
 
-// Start the web server
 app.listen(PORT, () => {
   console.log(`🌐 Web server listening on port ${PORT}`);
 });
