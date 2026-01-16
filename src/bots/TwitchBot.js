@@ -1,4 +1,4 @@
-import { StaticAuthProvider } from "@twurple/auth";
+import { AppTokenAuthProvider, StaticAuthProvider} from "@twurple/auth";
 import { ApiClient } from "@twurple/api";
 import { EventSubMiddleware } from "@twurple/eventsub-http";
 import { ChatClient } from "@twurple/chat";
@@ -19,14 +19,14 @@ export async function initTwitchBot(config) {
   } = config;
 
   const token = oauthToken.replace("oauth:", "");
-  const authProvider = new StaticAuthProvider(clientId, token, [
+  const chatAuthProvider = new StaticAuthProvider(clientId, token, [
     "chat:read",
     "chat:edit",
-    "channel:read:redemptions",
   ]);
-  const apiClient = new ApiClient({ authProvider });
+  const appAuthProvider = new AppTokenAuthProvider(clientId, clientSecret);
+  const apiClient = new ApiClient({ authProvider: appAuthProvider });
   const chatClient = new ChatClient({
-    authProvider,
+    authProvider: chatAuthProvider,
     channels,
   });
 
