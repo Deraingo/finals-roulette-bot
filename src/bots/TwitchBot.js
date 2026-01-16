@@ -18,25 +18,18 @@ export async function initTwitchBot(config) {
     webhookSecret,
   } = config;
 
-  // Remove 'oauth:' prefix if present
   const token = oauthToken.replace("oauth:", "");
-
-  // Use StaticAuthProvider (doesn't require refresh token)
   const authProvider = new StaticAuthProvider(clientId, token, [
     "chat:read",
     "chat:edit",
     "channel:read:redemptions",
   ]);
   const apiClient = new ApiClient({ authProvider });
-
-  // Create ChatClient for sending messages
   const chatClient = new ChatClient({
     authProvider,
     channels,
   });
 
-  // Get the hostname for EventSub webhooks (without http://)
-  // Render provides RENDER_EXTERNAL_HOSTNAME automatically
   const hostName = process.env.RENDER_EXTERNAL_HOSTNAME ||
                    process.env.RENDER_EXTERNAL_URL?.replace(/^https?:\/\//, '') ||
                    'localhost:3000';
@@ -46,7 +39,6 @@ export async function initTwitchBot(config) {
   console.log(`   Webhook URL: https://${hostName}/eventsub`);
   console.log(`   Secret configured: ${webhookSecret ? 'Yes' : 'No'}`);
 
-  // Create EventSub middleware for Express
   const eventSub = new EventSubMiddleware({
     apiClient,
     hostName,
@@ -54,40 +46,40 @@ export async function initTwitchBot(config) {
     secret: webhookSecret,
   });
 
-  // Apply EventSub middleware to Express app
   await eventSub.apply(expressApp);
-
-  // Subscribe to channel point redemptions for each channel
-  console.log(`📝 Creating EventSub subscriptions for ${channelIds.length} channels...`);
-
-  for (const [index, channelId] of channelIds.entries()) {
-    try {
-      console.log(`   Subscribing to channel ID: ${channelId} (${channels[index]})`);
-      const subscription = await eventSub.onChannelRedemptionAdd(channelId, (event) => {
-        console.log(`🎯 Redemption received: "${event.rewardTitle}" by ${event.userName} in ${channels[index]}`);
-        if (event.rewardTitle === redemptionTitle) {
-          const loadout = generateRandomLoadout();
-          const loadoutString = formatForTwitch(loadout);
-          const channelName = channels[index];
-          chatClient.say(channelName, loadoutString);
-          console.log(`✅ Sent loadout to ${channelName}`);
-        }
-      });
-      console.log(`   ✅ Subscription created for ${channels[index]}`);
-      console.log(`   📋 Subscription ID: ${subscription.id}`);
-      console.log(`   📊 Subscription status: ${subscription.status}`);
-    } catch (error) {
-      console.error(`   ❌ Failed to subscribe to ${channels[index]}:`, error);
-      console.error(`   Error details:`, error.stack);
-    }
-  }
-
-  console.log(`✅ All EventSub subscriptions created!`);
-
   await chatClient.connect();
 
   console.log(`✅ Twitch bot connected as ${botUsername}`);
   console.log(`📺 Listening to channels: ${channels.join(", ")}`);
   console.log(`🎯 Redemption trigger: "${redemptionTitle}"`);
-  console.log(`🔗 EventSub webhooks ready at /eventsub`);
+
+  // Return object with eventSub AND subscribe function
+  return {
+    eventSub,
+    subscribe: async () => {
+      // This code only runs when you call twitchBot.subscribe()
+      console.log(`📝 Creating EventSub subscriptions for ${channelIds.length} channels...`);
+
+      for (const [index, channelId] of channelIds.entries()) {
+        try {
+          console.log(`   Subscribing to channel ID: ${channelId} (${channels[index]})`);
+          const subscription = await eventSub.onChannelRedemptionAdd(channelId, (event) => {
+            console.log(`🎯 Redemption received: "${event.rewardTitle}" by ${event.userName} in ${channels[index]}`);
+            if (event.rewardTitle === redemptionTitle) {
+              const loadout = generateRandomLoadout();
+              const loadoutString = formatForTwitch(loadout);
+              const channelName = channels[index];
+              chatClient.say(channelName, loadoutString);
+              console.log(`✅ Sent loadout to ${channelName}`);
+            }
+          });
+          console.log(`   ✅ Subscription created for ${channels[index]}`);
+        } catch (error) {
+          console.error(`   ❌ Failed to subscribe to ${channels[index]}:`, error);
+        }
+      }
+      console.log(`✅ All EventSub subscriptions created!`);
+      console.log(`🔗 EventSub webhooks ready at /eventsub`);
+    }
+  };
 }

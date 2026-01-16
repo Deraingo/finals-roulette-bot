@@ -14,15 +14,6 @@ app.use((req, res, next) => {
   console.log(`📨 ${req.method} ${req.path} from ${req.ip}`);
   next();
 });
-
-// Health check endpoint (for Render)
-app.get("/", (req, res) => {
-  res.send("Finals Roulette Bot is running! 🎲");
-});
-
-initDiscordBot(process.env.DISCORD_TOKEN);
-
-// Start Twitch bot and pass the Express app for EventSub webhooks
 const twitchBot = await initTwitchBot({
   clientId: process.env.TWITCH_CLIENT_ID,
   clientSecret: process.env.TWITCH_CLIENT_SECRET,
@@ -35,7 +26,20 @@ const twitchBot = await initTwitchBot({
   expressApp: app,
   webhookSecret: process.env.TWITCH_WEBHOOK_SECRET,
 });
-
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🌐 Web server listening on port ${PORT}`);
+  twitchBot.eventSub.markAsReady();
+  await twitchBot.subscribe();
 });
+
+// Health check endpoint (for Render)
+app.get("/", (req, res) => {
+  res.send("Finals Roulette Bot is running! 🎲");
+});
+
+initDiscordBot(process.env.DISCORD_TOKEN);
+
+// Start Twitch bot and pass the Express app for EventSub webhooks
+
+
+
