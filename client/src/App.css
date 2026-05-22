@@ -1,11 +1,11 @@
+@import "tailwindcss";
 :root{
   --primary-background: #0f0f0f;
-  --button-primary: #00bcd4;
-  --button-hover: #0097ab;
+  --button-primary: #242424;
+  --button-hover: #363636;
   --text-color: #e5e5ec;
   --card: #1e1e2e;
 }
-
 #header{
   display: inline-block;
   color: var(--text-color);
@@ -18,10 +18,11 @@
   padding: 10px;
   color: var(--text-color);
   text-decoration: none;
-  margin-top: 10px;
+  margin-bottom: 30px;
+  margin-top: 40px;
   
 }
-.add-button:hover{
+.link-card:hover{
   background-color: var(--button-hover);
 }
 .page-redirect{
@@ -38,4 +39,31 @@
   width: 50%;
   margin-top: 10px;
   margin: auto;
+}
+.page-redirect:hover{
+  background-color: #393955;
+}
+.header-links {
+  background-color: var(--card);
+}
+.link-card{
+  cursor: pointer;
+  background-color: #242424;
+  color: #fff !important;
+  margin-bottom: 30px;
+  margin-top: 30px;
+}
+.app-section{
+  margin-top: 20px;
+  font-size: 18px;
+  font-weight: bold;
+  min-height: 100px;
+}
+.footer-links{
+  background-color: var(--card);
+  grid-row: 2;
+}
+.story{
+  margin-top: 30px;
+  margin-bottom: 30px;
 }
