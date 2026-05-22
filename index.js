@@ -1,19 +1,23 @@
 import express from "express";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { initDiscordBot } from "./src/bots/DiscordBot.js";
 import { initTwitchBot } from "./src/bots/TwitchBot.js";
 import { PORT, ENABLE_EVENTSUB_WEBHOOKS } from "./src/config/env.js";
 import { getStreamerChannels } from "./src/db/queries.js";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const clientDist = path.join(__dirname, "client", "dist");
+
 const app = express();
+
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path} from ${req.ip}`);
   next();
 });
-
-app.get("/", (req, res) => {
+app.get("/health", (req, res) => {
   res.send("Finals Roulette Bot is running!");
 });
-
 
 const streamers = await getStreamerChannels();
 const channels = streamers.map(s => s.username);
@@ -27,6 +31,13 @@ const twitchBot = await initTwitchBot({
   redemptionTitle: process.env.TWITCH_REDEMPTION_TITLE,
   expressApp: app,
   webhookSecret: process.env.TWITCH_WEBHOOK_SECRET,
+});
+
+// (Track B routes will go here — between bot init and static/fallback)
+app.use(express.static(clientDist));
+
+app.use((req, res) => {
+  res.sendFile(path.join(clientDist, "index.html"));
 });
 
 app.listen(PORT, async () => {
