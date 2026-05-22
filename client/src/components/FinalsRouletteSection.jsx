@@ -9,8 +9,12 @@ function FinalsRouletteSection(){
                         Add To Your Discord
                 </a>
 
-                <a className="link-card p-6 rounded-lg shadow-md" href="">
-                        Add To Your Twitch
+                <a
+                    href="/auth/twitch/login"
+                    className="inline-flex items-center px-6 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold transition"
+                    >
+                    <svg className="w-5 h-5 mr-2" /* twitch icon */ />
+                    Add bot to your channel
                 </a>
         </div>
     </div>
