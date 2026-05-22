@@ -1,0 +1,69 @@
+@import "tailwindcss";
+:root{
+  --primary-background: #0f0f0f;
+  --button-primary: #242424;
+  --button-hover: #363636;
+  --text-color: #e5e5ec;
+  --card: #1e1e2e;
+}
+#header{
+  display: inline-block;
+  color: var(--text-color);
+  margin-top: 30px;
+  margin-bottom: 30px;
+  width: 100%;
+}
+.add-button{
+  background-color: var(--button-primary);
+  padding: 10px;
+  color: var(--text-color);
+  text-decoration: none;
+  margin-bottom: 30px;
+  margin-top: 40px;
+  
+}
+.link-card:hover{
+  background-color: var(--button-hover);
+}
+.page-redirect{
+  background-color: var(--card);
+  width: 100%;
+  text-decoration: none;
+  color: var(--text-color);
+  padding-left: 100px;
+  padding-right: 100px;
+  padding-top: 25px;
+  padding-bottom: 25px;
+}
+.button-container{
+  width: 50%;
+  margin-top: 10px;
+  margin: auto;
+}
+.page-redirect:hover{
+  background-color: #393955;
+}
+.header-links {
+  background-color: var(--card);
+}
+.link-card{
+  cursor: pointer;
+  background-color: #242424;
+  color: #fff !important;
+  margin-bottom: 30px;
+  margin-top: 30px;
+}
+.app-section{
+  margin-top: 20px;
+  font-size: 18px;
+  font-weight: bold;
+  min-height: 100px;
+}
+.footer-links{
+  background-color: var(--card);
+  grid-row: 2;
+}
+.story{
+  margin-top: 30px;
+  margin-bottom: 30px;
+}

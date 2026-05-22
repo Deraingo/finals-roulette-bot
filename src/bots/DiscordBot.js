@@ -10,7 +10,7 @@ export function initDiscordBot(discord_token) {
     ],
   });
 
-  client.once("ready", () => {
+  client.once("clientReady", () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
   });
 
@@ -23,6 +23,5 @@ export function initDiscordBot(discord_token) {
       await sendHelp(message);
     }
   });
-  console.log("\n\n\nLoaded token:", discord_token ? "YES\n\n\n" : "NO\n\n\n");
   client.login(discord_token);
 }

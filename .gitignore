@@ -1,3 +1,25 @@
+
+# All env variants (allow only the committed template)
+.env*
+!.env.example
+
+# Defensive — never commit cert/key files even if you don't use them yet
+*.pem
+*.key
+*.crt
+*.p12
+
+# Database dumps (your migrations/*.sql files stay committed — these patterns catch backups)
+*.sql.bak
+*.dump
+*.dump.gz
+
+# Tool/IDE local state
+.dbeaver/
+.psql_history
+
+# Local-only overrides (common convention)
+*.local
 # Node dependencies
 node_modules/
 npm-debug.log*
