@@ -1,98 +1,39 @@
-import { randomUUID, createHmac, timingSafeEqual } from "node:crypto";
 import {
   TWITCH_REDIRECT_URI,
   SESSION_SECRET,
   IS_PROD,
 } from "../config/env.js";
+import { RefreshingAuthProvider } from "@twurple/auth";
+import { saveToken, getAllTokens } from "../db/queries.js";
 
-const STATE_COOKIE = "twitch_oauth_state";
-const STATE_TTL_MS = 10 * 60 * 1000; // OAuth flow should complete in <10 minutes
-
-// Sign a state value: returns "<state>.<HMAC>"
-// HMAC ties the cookie to SESSION_SECRET — an attacker can't forge it without our secret.
-function signState(state) {
-  const mac = createHmac("sha256", SESSION_SECRET).update(state).digest("hex");
-  return `${state}.${mac}`;
-}
-
-// Verify and extract the raw state from a signed cookie.
-// timingSafeEqual avoids leaking signature info via response timing.
-function verifyState(signed) {
-  if (!signed || typeof signed !== "string") return null;
-  const [state, mac] = signed.split(".");
-  if (!state || !mac) return null;
-
-  const expected = createHmac("sha256", SESSION_SECRET).update(state).digest("hex");
-  const a = Buffer.from(mac, "hex");
-  const b = Buffer.from(expected, "hex");
-  if (a.length !== b.length) return null;
-  return timingSafeEqual(a, b) ? state : null;
-}
-
-export function registerTwitchAuthRoutes(app, {
-  authProvider,
-  apiClient,
-  chatClient,
-  eventSub,
-  saveToken,
-  redemptionTitle,
-  generateRandomLoadout,
-  formatForTwitch,
-}) {
-  app.get("/auth/twitch/login", (req, res) => {
-    const state = randomUUID();
-    const signed = signState(state);
-
-    res.cookie(STATE_COOKIE, signed, {
-      httpOnly: true,   
-      secure: IS_PROD,   
-      sameSite: "lax",        
-      maxAge: STATE_TTL_MS,
-      path: "/auth/twitch",    
-    });
-
-    const scopes = ["chat:read", "chat:edit", "channel:read:redemptions"];
-    const url = new URL("https://id.twitch.tv/oauth2/authorize");
-    url.searchParams.set("client_id", process.env.TWITCH_CLIENT_ID);
-    url.searchParams.set("redirect_uri", TWITCH_REDIRECT_URI);
-    url.searchParams.set("response_type", "code");
-    url.searchParams.set("scope", scopes.join(" "));
-    url.searchParams.set("state", state);
-    url.searchParams.set("force_verify", "true"); 
-
-    res.redirect(url.toString());
+export async function buildAuthProvider({ clientId, clientSecret}) {
+  const authProvider = new RefreshingAuthProvider({
+    clientId,
+    clientSecret,
+    redirectUri: TWITCH_REDIRECT_URI
   });
 
-  app.get("/auth/twitch/callback", async (req, res) => {
-    const { code, state: returnedState, error } = req.query;
-    if (error) {
-      return res.redirect(`/?bot_added=error&reason=${encodeURIComponent(error)}`);
-    }
-    const signed = req.cookies?.[STATE_COOKIE];
-    const expectedState = verifyState(signed);
-    res.clearCookie(STATE_COOKIE, { path: "/auth/twitch" });
-
-    if (!expectedState || expectedState !== returnedState) {
-      return res.redirect("/?bot_added=error&reason=invalid_state");
-    }
-
-    try {
-      const userId = await authProvider.addUserForCode(code, []);
-      const user = await apiClient.users.getUserById(userId);
-      const token = await authProvider.getAccessTokenForUser(userId);
-      await saveToken(userId, user.name, token, false);
-      await chatClient.join(user.name);
-      await eventSub.onChannelRedemptionAdd(userId, (event) => {
-        if (event.rewardTitle === redemptionTitle) {
-          const loadout = generateRandomLoadout();
-          chatClient.say(user.name, formatForTwitch(loadout));
-        }
-      });
-
-      res.redirect(`/?bot_added=success&channel=${encodeURIComponent(user.name)}`);
-    } catch (err) {
-      console.error("OAuth callback failed:", err.message);  
-      res.redirect("/?bot_added=error&reason=server_error");
-    }
+  authProvider.onRefresh(async (userId, newTokenData) => {
+    const existing = (await getAllTokens()).find((r) => r.user_id === userId);
+    await saveToken(
+      userId,
+      existing?.username ?? "unknown",
+      newTokenData,
+      existing?.is_bot ?? false
+    );
   });
+
+  for (const row of await getAllTokens()) {
+    const tokenData = {
+      accessToken: row.access_token,
+      refreshToken: row.refresh_token,
+      scope: row.scope,
+      expiresIn: row.expires_in,
+      obtainmentTimestamp: Number(row.obtainment_timestamp),
+    };
+    const intents = row.is_bot ? ["chat"] : [];
+    authProvider.addUser(row.user_id, tokenData, intents);
+  }
+
+  return authProvider;
 }

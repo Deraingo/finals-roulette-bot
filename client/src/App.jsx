@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 import Header from './components/Header'
 import FinalsRouletteSection from './components/FinalsRouletteSection'
@@ -22,7 +22,7 @@ function App() {
   }, []);
   return (
     <>
-      <Header/>
+      {/* <Header/> */}
         {banner?.type === "success" && (
           <div className="bg-green-600 text-white p-4 text-center">
             ✅ Bot added to {banner.channel}'s channel! Try a redemption to test.
