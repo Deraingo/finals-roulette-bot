@@ -30,7 +30,9 @@ export function registerTwitchAuthRoutes(app, {
   generateRandomLoadout,
   formatForTwitch,
 }) {
+  console.log("DEBUG: registerTwitchAuthRoutes called");
   app.get("/auth/twitch/login", (req, res) => {
+    console.log("DEBUG: /auth/twitch/login handler hit");
     const state = randomUUID();
     const signed = signState(state);
 
